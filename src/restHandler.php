@@ -29,6 +29,11 @@ class RestHandler {
             'methods'  => 'POST',
             'callback' => [$this, 'addFavoritePost'],
         ]);
+
+        register_rest_route($this->restNamespace, '/favorite-posts', [
+            'methods'  => 'DELETE',
+            'callback' => [$this, 'removeFavoritePost'],
+        ]);
     }
 
     public function getFavoritePosts($request) {
@@ -91,25 +96,19 @@ class RestHandler {
     }
 
     public function removeFavoritePost($request) {
-        $user_id = $request->get_param('user_id');
-        $post_id = $request->get_param('post_id');
+        $params = $request->get_json_params();
+        $user_id = isset($params['user_id']) ? absint($params['user_id']) : absint($request->get_param('user_id'));
+        $post_id = isset($params['post_id']) ? absint($params['post_id']) : absint($request->get_param('post_id'));
 
-        $result = $this->dbHandler->removeFavorite($user_id, $post_id);
-
-        if ($result) {
+        if (!$user_id || !$post_id) {
             return new \WP_REST_Response([
-                'code' => 'favorite_post_removed',
-                'status' => 'success',
-                'message' => 'Favorite post removed',
+                'code' => 'invalid_favorite_post_params',
+                'status' => 'error',
+                'message' => 'Invalid user_id or post_id',
                 'data' => null
-            ], 200);
+            ], 400);
         }
 
-        return new \WP_REST_Response([
-            'code' => 'failed_to_remove_favorite_post',
-            'status' => 'error',
-            'message' => 'Failed to remove favorite post',
-            'data' => null
-        ], 500);
+        return $this->dbHandler->removeFavorite($user_id, $post_id);
     }
 }

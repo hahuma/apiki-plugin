@@ -26,7 +26,7 @@ const favoritePosts = {
         });
     },
 
-    async handleClick() {
+    async favoritePost() {
         const userId = await this.getUserId();
         if (!userId) return;
 
@@ -45,13 +45,46 @@ const favoritePosts = {
         })
         .then(response => response.json())
         .then(data => {
-            console.log(data);
+            this.component.classList.toggle('is-favorite', data.code === 'favorite_post_added');
         })
         .catch(error => {
             console.error('Erro:', error);
         });
     },
 
+    async handleClick() {
+        if (this.component.classList.contains('is-favorite')) {
+            await this.removeFavoritePost();
+        } else {
+            await this.favoritePost();
+        }
+    },
+
+    async removeFavoritePost() {
+        const userId = await this.getUserId();
+        if (!userId) return;
+
+        // @ts-ignore
+        fetch(wpApiSettings.root + wpApiSettings.rest_namespace + '/favorite-posts', {
+            method: 'DELETE',
+            body: JSON.stringify({
+                post_id: this.component.dataset.postId,
+                user_id: userId
+            }),
+            headers: {
+                'Content-Type': 'application/json',
+                // @ts-ignore
+                'X-WP-Nonce': wpApiSettings.nonce
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            this.component.classList.toggle('is-favorite', data.code === 'favorite_post_removed');
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+        });
+    },
     component: document.querySelector('.favorite-post-button'),
 }
 
