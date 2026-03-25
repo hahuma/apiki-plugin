@@ -1,0 +1,19 @@
+.favorite-post-button {
+  cursor: pointer;
+  opacity: .5;
+  background: none;
+  border: none;
+  padding: 0;
+  transition: opacity .3s;
+  display: block;
+}
+
+.favorite-post-button:hover, .favorite-post-button.is-favorite {
+  opacity: 1;
+}
+
+.favorite-post-button img {
+  pointer-events: none;
+  height: 32px;
+}
+/*# sourceMappingURL=index.css.map */
