@@ -30,6 +30,11 @@ class WordPressBackEndChallenge {
 
         add_filter( 'the_content', [$this, 'addFavoritePostIcon'] );
         add_action( 'wp_enqueue_scripts', [$this, 'enqueueScripts'] );
+        add_action( 'wp_footer', [$this, 'addDialogLoader'] );
+    }
+
+    public function addDialogLoader() {
+        echo '<dialog id="dialog-loader"><div class="loader"></div></dialog>';
     }
 
     public function addFavoritePostIcon( $content )

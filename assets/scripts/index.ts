@@ -53,11 +53,15 @@ const favoritePosts = {
     },
 
     async handleClick() {
+        !!this.dialogLoader && this.dialogLoader.showModal();
+
         if (this.component.classList.contains('is-favorite')) {
             await this.removeFavoritePost();
         } else {
             await this.favoritePost();
         }
+
+        !!this.dialogLoader && this.dialogLoader.close();
     },
 
     async removeFavoritePost() {
@@ -86,6 +90,7 @@ const favoritePosts = {
         });
     },
     component: document.querySelector('.favorite-post-button'),
+    dialogLoader: document.querySelector('#dialog-loader'),
 }
 
 favoritePosts.init();
