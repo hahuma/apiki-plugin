@@ -1,3 +1,5 @@
+import Toastify from 'toastify-js';
+
 const favoritePosts = {
     init() {
         if (!this.component) return;
@@ -9,33 +11,12 @@ const favoritePosts = {
         this.component.addEventListener('click', this.handleClick.bind(this));
     },
 
-    async getUserId() {
-        // @ts-ignore
-        return fetch(wpApiSettings.root + 'wp/v2/users/me', {
-            method: 'GET',
-            headers: {
-                // @ts-ignore
-                'X-WP-Nonce': wpApiSettings.nonce
-            }
-        })
-        .then(response => response.json())
-        .then(user => user.id)
-        .catch(error => {
-            console.error('Erro:', error);
-            return null;
-        });
-    },
-
     async favoritePost() {
-        const userId = await this.getUserId();
-        if (!userId) return;
-
         // @ts-ignore
         fetch(wpApiSettings.root + wpApiSettings.rest_namespace + '/favorite-posts', {
             method: 'POST',
             body: JSON.stringify({
-                post_id: this.component.dataset.postId,
-                user_id: userId
+                post_id: this.component.dataset.postId
             }),
             headers: {
                 'Content-Type': 'application/json',
@@ -45,10 +26,18 @@ const favoritePosts = {
         })
         .then(response => response.json())
         .then(data => {
-            this.component.classList.toggle('is-favorite', data.code === 'favorite_post_added');
+            Toastify({ text: data.message }).showToast();
+
+            this.component.classList.add('is-favorite');
         })
         .catch(error => {
-            console.error('Erro:', error);
+            Toastify({
+                text: 'Failed to add favorite post',
+                className: 'error',
+                style: {
+                    background: 'linear-gradient(to right, #ff0000, #ff4747)',
+                }
+            }).showToast();
         });
     },
 
@@ -65,15 +54,11 @@ const favoritePosts = {
     },
 
     async removeFavoritePost() {
-        const userId = await this.getUserId();
-        if (!userId) return;
-
         // @ts-ignore
         fetch(wpApiSettings.root + wpApiSettings.rest_namespace + '/favorite-posts', {
             method: 'DELETE',
             body: JSON.stringify({
-                post_id: this.component.dataset.postId,
-                user_id: userId
+                post_id: this.component.dataset.postId
             }),
             headers: {
                 'Content-Type': 'application/json',
@@ -83,14 +68,24 @@ const favoritePosts = {
         })
         .then(response => response.json())
         .then(data => {
-            this.component.classList.toggle('is-favorite', data.code === 'favorite_post_removed');
+            Toastify({ text: data.message }).showToast();
+
+            this.component.classList.remove('is-favorite');
         })
         .catch(error => {
-            console.error('Erro:', error);
+            Toastify({
+                text: 'Failed to remove favorite post',
+                className: 'error',
+                style: {
+                    background: 'linear-gradient(to right, #ff0000, #ff4747)',
+                }
+            }).showToast();
         });
     },
+
     component: document.querySelector('.favorite-post-button'),
     dialogLoader: document.querySelector('#dialog-loader'),
+    favoritePostsPopover: document.querySelector('#favorite-posts-popover'),
 }
 
 favoritePosts.init();

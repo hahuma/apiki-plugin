@@ -23,23 +23,44 @@ class RestHandler {
         register_rest_route($this->restNamespace, '/favorite-posts', [
             'methods'  => 'GET',
             'callback' => [$this, 'getFavoritePosts'],
+            'permission_callback' => function () {
+                return is_user_logged_in() ? true : new WP_Error( 'rest_not_logged_in', 'You must be logged in to access this endpoint.', array( 'status' => 401 ) );
+            },
         ]);
 
         register_rest_route($this->restNamespace, '/favorite-posts', [
             'methods'  => 'POST',
             'callback' => [$this, 'addFavoritePost'],
+            'permission_callback' => function () {
+                return is_user_logged_in() ? true : new WP_Error( 'rest_not_logged_in', 'You must be logged in to access this endpoint.', array( 'status' => 401 ) );
+            },
+            'args' => [
+                'post_id' => [
+                    'type' => 'integer',
+                    'required' => true,
+                    'sanitize_callback' => 'absint',
+                ]
+            ],
         ]);
 
         register_rest_route($this->restNamespace, '/favorite-posts', [
             'methods'  => 'DELETE',
             'callback' => [$this, 'removeFavoritePost'],
+            'permission_callback' => function () {
+                return is_user_logged_in() ? true : new WP_Error( 'rest_not_logged_in', 'You must be logged in to access this endpoint.', array( 'status' => 401 ) );
+            },
+            'args' => [
+                'post_id' => [
+                    'type' => 'integer',
+                    'required' => true,
+                    'sanitize_callback' => 'absint',
+                ]
+            ],
         ]);
     }
 
     public function getFavoritePosts($request) {
-        $user_id = $request->get_param('user_id');
-
-        $favorites = $this->dbHandler->getAllFavoritesByUserId($user_id);
+        $favorites = $this->dbHandler->getAllFavoritesByUserId(get_current_user_id());
 
         if ($favorites) {
             return new \WP_REST_Response([
@@ -54,61 +75,74 @@ class RestHandler {
             'code' => 'failed_to_fetch_favorite_posts',
             'status' => 'error',
             'message' => 'Failed to fetch favorite posts',
-            'data' => null
-        ], 500);
+            'data' => []
+        ], 200);
     }
 
     public function addFavoritePost($request) {
         $params = $request->get_json_params();
 
-        $user_id = isset($params['user_id']) ? absint($params['user_id']) : absint($request->get_param('user_id'));
         $post_id = isset($params['post_id']) ? absint($params['post_id']) : absint($request->get_param('post_id'));
 
-        if (!$user_id || !$post_id) {
+        if (!$post_id) {
             return new \WP_REST_Response([
-                'code' => 'invalid_favorite_post_params',
-                'status' => 'error',
-                'message' => 'Invalid user_id or post_id',
-                'data' => null
+                'code'    => 'invalid_favorite_post_params',
+                'data'    => [],
+                'message' => 'Invalid post_id',
+                'status'  => 'error'
             ], 400);
         }
 
-        $result = $this->dbHandler->addFavorite($user_id, $post_id);
+        $result = $this->dbHandler->addFavorite(get_current_user_id(), $post_id);
 
         if ($result) {
             return new \WP_REST_Response([
                 'code' => 'favorite_post_added',
-                'status' => 'success',
-                'message' => 'Favorite post added',
                 'data' => [
-                    'user_id' => $user_id,
                     'post_id' => $post_id
-                ]
+                ],
+                'message' => 'Favorite post added',
+                'status'  => 'success'
             ], 200);
         }
 
         return new \WP_REST_Response([
-            'code' => 'failed_to_add_favorite_post',
-            'status' => 'error',
+            'code'    => 'failed_to_add_favorite_post',
+            'data'    => [],
             'message' => 'Failed to add favorite post',
-            'data' => null
-        ], 500);
+            'status'  => 'error',
+        ], 400);
     }
 
     public function removeFavoritePost($request) {
         $params = $request->get_json_params();
-        $user_id = isset($params['user_id']) ? absint($params['user_id']) : absint($request->get_param('user_id'));
         $post_id = isset($params['post_id']) ? absint($params['post_id']) : absint($request->get_param('post_id'));
 
-        if (!$user_id || !$post_id) {
+        if (!$post_id) {
             return new \WP_REST_Response([
-                'code' => 'invalid_favorite_post_params',
-                'status' => 'error',
-                'message' => 'Invalid user_id or post_id',
-                'data' => null
+                'code'    => 'invalid_favorite_post_params',
+                'data'    => [],
+                'message' => 'Invalid post_id',
+                'status'  => 'error'
             ], 400);
         }
 
-        return $this->dbHandler->removeFavorite($user_id, $post_id);
+        $result = $this->dbHandler->removeFavorite(get_current_user_id(), $post_id);
+
+        if ($result) {
+            return new \WP_REST_Response([
+                'code'    => 'favorite_post_removed',
+                'data'    => [],
+                'status'  => 'success',
+                'message' => 'Favorite post removed',
+            ], 200);
+        }
+
+        return new \WP_REST_Response([
+            'code'    => 'failed_to_remove_favorite_post',
+            'data'    => [],
+            'status'  => 'error',
+            'message' => 'Failed to remove favorite post'
+        ], 400);
     }
 }

@@ -12,5 +12,8 @@
   "scripts": {
     "dev": "parcel watch index.ts",
     "build": "parcel build index.ts"
+  },
+  "dependencies": {
+    "toastify-js": "^1.12.0"
   }
 }

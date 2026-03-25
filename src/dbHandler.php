@@ -15,13 +15,21 @@ class DbHandler {
     }
 
     public function createTable() {
-        $this->wpdb->query("CREATE TABLE IF NOT EXISTS $this->table_name (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            user_id INT NOT NULL,
-            post_id INT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            CONSTRAINT UQ_user_id_post_id UNIQUE (user_id, post_id)
-        )");
+        $table           = $this->table_name;
+        $charset_collate = $this->wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE $table (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) unsigned NOT NULL,
+            post_id bigint(20) unsigned NOT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            PRIMARY KEY  (id),
+            UNIQUE KEY user_id_post_id (user_id, post_id)
+        ) $charset_collate;";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+        dbDelta($sql);
     }
 
     private function dropTable() {

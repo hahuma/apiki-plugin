@@ -34,7 +34,7 @@ class WordPressBackEndChallenge {
     }
 
     public function addDialogLoader() {
-        echo '<dialog id="dialog-loader"><div class="loader"></div></dialog>';
+        echo '<dialog id="dialog-loader"><div class="loader"></div></dialog><div id="favorite-posts-popover" popover></div>';
     }
 
     public function addFavoritePostIcon( $content )
@@ -45,7 +45,7 @@ class WordPressBackEndChallenge {
 
         $is_favorite = $this->dbHandler->getFavoriteByUserAndPost(get_current_user_id(), get_the_ID());
 
-        $custom_content = "<button class='favorite-post-button" . ($is_favorite || !empty($is_favorite) ? ' is-favorite' : '') . "' data-post-id='" . get_the_ID() . "' data-component='favorite-post' type='button'>
+        $custom_content = "<button class='favorite-post-button" . ($is_favorite || !empty($is_favorite) ? ' is-favorite' : '') . "' data-post-id='" . esc_attr( absint( get_the_ID() ) ) . "' data-component='favorite-post' type='button'>
             <img src='" . esc_url( plugin_dir_url( __FILE__ ) . 'assets/icons/heart.png' ) . "' alt=''/>
         </button>";
 
@@ -55,6 +55,21 @@ class WordPressBackEndChallenge {
     }
 
     public function enqueueScripts() {
+        if (!is_user_logged_in() || !is_singular()) :
+            return;
+        endif;
+
+        wp_enqueue_script(
+            'toastify',
+            'https://cdn.jsdelivr.net/npm/toastify-js',
+            [],
+            '1.12.0',
+            [
+                'in_footer' => true,
+                'strategy' => 'async'
+            ]
+        );
+
         wp_enqueue_script(
             'wordpress-back-end-challenge',
             plugin_dir_url( __FILE__ ) . 'dist/index.js',
@@ -81,6 +96,13 @@ class WordPressBackEndChallenge {
             plugin_dir_url( __FILE__ ) . 'dist/index.css',
             [],
             filemtime(plugin_dir_path( __FILE__ ) . 'dist/index.css')
+        );
+
+        wp_enqueue_style(
+            'toastify',
+            'https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css',
+            [],
+            '1.12.0'
         );
     }
 }
