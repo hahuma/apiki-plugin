@@ -19,7 +19,7 @@ final class Database
         $table = self::tableName();
         $charset = $wpdb->get_charset_collate();
 
-        $sql = "CREATE TABLE {$table} (
+        $sql = "CREATE TABLE IF NOT EXISTS {$table} (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             user_id bigint(20) unsigned NOT NULL,
             post_id bigint(20) unsigned NOT NULL,
